@@ -45,6 +45,23 @@ shared_examples 'Invoice API' do
     end
   end
 
+  context "sending an invoice" do
+    it "sends a stripe invoice" do
+      invoice = Stripe::Invoice.create(currency: "cad", statement_description: "orig-desc")
+      expect(invoice.currency).to eq("cad")
+      expect(invoice.statement_description).to eq("orig-desc")
+
+      invoice.currency = "usd"
+      invoice.statement_description = "new-desc"
+      invoice.save
+
+      Stripe::Invoice.send_invoice(invoice.id)
+
+      invoice = Stripe::Invoice.retrieve(invoice.id)
+      expect(invoice.status).to eq("open")
+    end
+  end
+
   context "retrieving a list of invoices" do
     before do
       @customer = Stripe::Customer.create(email: 'johnny@appleseed.com')
